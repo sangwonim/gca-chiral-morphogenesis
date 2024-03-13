@@ -1,0 +1,17 @@
+numpy
+cython
+scipy
+matplotlib
+imageio
+tensorboard
+pyyaml
+tqdm
+future
+plyfile
+ninja
+moviepy
+psutil
+pdbpp
+scikit-learn
+pyntcloud
+point_cloud_utils

@@ -1,0 +1,225 @@
+###########
+# Dataset #
+###########
+dataset: gold
+data_dim: 3
+task: material
+
+root: ./data/processed
+auto_reload: True
+
+data_seqs: [train-2]
+val_data_seqs: [
+  RD-2,
+  Cube-2,
+  RC-2,
+  CRD-2,
+  HOH-2,
+  H3_inter-2,
+  H3_inter_D-2,
+  H3_inter2-2,
+  H3_inter2_D-2,
+  H1_inter-2,
+  H1_inter_D-2,
+  H1_inter2-2,
+  H1_inter2_D-2,
+  H2-2,
+  H2_D-2,
+  HI3, HI4, HI5, HI6, HI7,
+  RDR2,
+  CBR2,
+]
+
+num_input:
+# length of biggest material is 150
+voxel_size: 3
+transform:
+random_seed: 0
+epoch: 10000000
+num_workers: 0
+quantize: round
+coord_jitter_x: False
+coord_jitter_y: False
+truncate_data:
+  min:
+  max:
+
+#########
+# Model #
+#########
+model: infusion_gca
+padding: 1
+pad_type: hypercubic
+append_input: False
+
+input_format: ones
+output_format: occupancy
+
+backbone:
+  name: Mink16UNet14C
+  kernels: [
+    7, 5, 5, 3, 3,
+    3, 3, 3, 5, 5
+  ]
+  init_pretrained:
+  in_channels: 1
+  out_channels: 1
+
+sampling_scheme: bernoulli
+
+#########
+# Train #
+#########
+last_step: 5000
+infusion_scheduler:
+  type: linear
+  initial_rate: 0.2
+  speed: 0.000
+random_rotate: False
+
+# catch exception when gpu overflow occurs, note that this catches all the gpu overflow
+# when debugging, set this to false
+skip_gpu_overflow: False
+
+batch_size: 16
+early_pop: True
+completion_rate: 0.90
+max_phase: 20
+max_eval_phase: 20
+equilibrium_max_phase: 0
+last_equilibrium_max_phase: 1000000
+
+optimizer:
+  type: Adam
+  options:
+    lr: 0.0005
+    weight_decay: 0.
+
+clip_grad:
+  type: norm
+  options:
+    max_norm: 0.5
+
+lr_scheduler:
+  type: StepLR
+  options:
+    step_size: 100000000
+    gamma: 1.0
+
+#################
+# Decorrelation #
+#################
+buffer_size: 256
+
+###########
+# Summary #
+###########
+summary_step: 50
+ckpt_step: 1000
+
+# Visualization
+color_map: hsv
+# either list of specific indices or a number
+# if number, sample indices with equal interval w.r.t dataset
+
+vis:
+  indices: 50
+  imgs:
+    step: 1000
+    num_views: 1
+    alpha: 0.3
+    axis_ranges: [
+      [-25, 25],
+      [-25, 25],
+      [-25, 25],
+    ]
+    max_sample: 1000000
+    phase_interval: 1
+    height: 300
+    width: 300
+    trials: 5
+    save_pt: False
+    save_ply: True
+  all_imgs:
+    step: 10000000000
+    num_views: 4
+    max_sample: 1000000
+    phase_interval: 5
+    height: 200
+    width: 200
+    trials: 1
+  debug:
+    step: 50000
+    num_views: 1
+    alpha: 0.3
+    axis_ranges: [
+      [-25, 25],
+      [-25, 25],
+      [-25, 25],
+    ]
+    max_sample: 1000000
+    phase_interval: 5
+    height: 300
+    width: 300
+    trials: 1
+  heatmap:
+    alpha: 0.3
+    axis_ranges:
+      - - -25
+        - 25
+      - - -25
+        - 25
+      - - -25
+        - 25
+    crop_len: 35
+    heatmap_len: 10
+    height: 800
+    max_sample: 1000000
+    num_views: 1
+    step: 100000000
+    trials: 5
+    width: 800
+  heatmap_3d:
+    alpha: 0.3
+    axis_ranges:
+      - - -25
+        - 25
+      - - -25
+        - 25
+      - - -25
+        - 25
+    crop_len: 35
+    heatmap_len: 10
+    height: 800
+    max_sample: 1000000
+    num_views: 1
+    step: 100000000
+    trials: 5
+    width: 800
+    min_points:
+
+
+
+#########
+# Utils #
+#########
+device: cuda
+seed: 0
+
+#########
+# Debug #
+#########
+# every step is visualized
+debug_vis: False
+# every step is evaluated
+debug_eval: False
+# fit only specified data point
+# if not used, leave as blank (None)
+overfit_one_ex:
+
+###############
+# Test & Eval #
+###############
+eval_step: 1000000000
+eval_batch_size: 4
+test_step: 1000000000  # we do not test
