@@ -12,7 +12,6 @@ from torch.utils.tensorboard import SummaryWriter
 from typing import List
 from models.base_model import Model
 from models.gca import GCA
-from utils import data_augmentation
 from utils.phase import Phase
 from utils.sparse_tensor import SparseTensorWrapper
 from utils.util import get_unique_rot_mats, random_rotate, quantize_data
@@ -291,7 +290,6 @@ class BaseDataset(Dataset, ABC):
 		self.config = config
 		self.mode = mode
 		self.device = config['device']
-		self.sparse_transform = self.build_transform()
 		self.data_dim = config['data_dim']
 		self.rot_mats = get_unique_rot_mats()
 
@@ -304,16 +302,6 @@ class BaseDataset(Dataset, ABC):
 			-> (torch.tensor, torch.tensor, torch.tensor, torch.tensor, List[str]):
 		# sparse tensor and tensor should have equal size
 		raise NotImplemented
-
-	def build_transform(self):
-		transform_config = self.config['transform']
-		if transform_config is None:
-			return None
-		return data_augmentation.Compose([
-			getattr(data_augmentation, config['type'])(**config['options'])
-			if config.get('options') else getattr(data_augmentation, config['type'])()
-			for config in transform_config
-		])
 
 	def prepare_sparse_tensor(self, x_coord: torch.tensor, y_coord: torch.tensor, idx=None) \
 			-> (torch.tensor,) * 4:
@@ -336,10 +324,9 @@ class BaseDataset(Dataset, ABC):
 		y_feat = torch.ones(y_coord.shape[0], 1)
 
 		# create sparse tensor
-		if (self.sparse_transform is not None) and (self.mode == 'train'):
+		if self.mode == 'train':
 			len_x = x_coord.shape[0]
 			coord = torch.cat([x_coord, y_coord], dim=0)
-			coord = self.sparse_transform(coord)
 			x_coord, y_coord = coord[:len_x, :], coord[len_x:, :]
 
 		coord_jitter_x = self.config.get('coord_jitter_x') if self.mode == 'train' else False

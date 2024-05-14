@@ -12,7 +12,6 @@ from utils.pad import get_shifts
 from utils.sparse_tensor import SparseTensorWrapper
 from utils.util import timeit
 from utils.chamfer_distance import ChamferDistance
-from utils.metrics import MMDCalculator
 
 
 class GCA(Model, ABC):
@@ -36,11 +35,6 @@ class GCA(Model, ABC):
         ).to(self.config['device'])
         self.shift_size = self.shifts.shape[0]
         self._chamfer_dist = ChamferDistance()
-
-        if (self.config.get('task') is None) or (self.config.get('task') == 'completion'):
-            self.mmd_calculator = MMDCalculator(config)
-            self.mean_aligned_mmd_calculator = MMDCalculator(config)
-            self.min_aligned_mmd_calculator = MMDCalculator(config)
 
     def transition(self, s: SparseTensorWrapper) -> SparseTensorWrapper:
         s = s.to(self.device)
